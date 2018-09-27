@@ -25,7 +25,7 @@ import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.ScanQuery;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
-import org.apache.ignite.ml.math.impls.vector.DenseLocalOnHeapVector;
+import org.apache.ignite.ml.math.primitives.vector.VectorUtils;
 import org.apache.ignite.ml.nn.UpdatesStrategy;
 import org.apache.ignite.ml.optimization.updatecalculators.SimpleGDParameterUpdate;
 import org.apache.ignite.ml.optimization.updatecalculators.SimpleGDUpdateCalculator;
@@ -60,8 +60,8 @@ public class ClientNode {
             LogisticRegressionModel mdl = trainer.fit(
                     ignite,
                     trainData,
-                    (k, v) -> v.getFeatures(),     // Feature extractor.
-                    (k, v) -> v.getFraudClass()    // Label extractor.
+                    (k, v) -> VectorUtils.of(v.getFeatures()),     // Feature extractor.
+                    (k, v) -> v.getFraudClass()                    // Label extractor.
             ).withRawLabels(true);
 
             System.out.println(">>> -----------------------------");
@@ -77,7 +77,7 @@ public class ClientNode {
                     FraudObservation observation = testEntry.getValue();
 
                     double groundTruth = observation.getFraudClass();
-                    double prediction = mdl.apply(new DenseLocalOnHeapVector(observation.getFeatures()));
+                    double prediction = mdl.apply(VectorUtils.of(observation.getFeatures()));
 
                     totalAmount++;
                     if ((int) groundTruth != (int) prediction)
