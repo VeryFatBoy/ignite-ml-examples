@@ -48,8 +48,9 @@ public class ClientNode {
             IgniteCache<Integer, FraudObservation> trainData = getCache(ignite, "FRAUD_TRAIN");
             IgniteCache<Integer, FraudObservation> testData = getCache(ignite, "FRAUD_TEST");
 
-            loadData("examples/src/main/resources/fraud-train.csv", trainData);
-            loadData("examples/src/main/resources/fraud-test.csv", testData);
+            Loader loader = new Loader();
+            loader.load("fraud-train.csv", trainData);
+            loader.load("fraud-test.csv", testData);
 
             LogisticRegressionSGDTrainer<?> trainer = new LogisticRegressionSGDTrainer<>(new UpdatesStrategy<>(
                     new SimpleGDUpdateCalculator(0.2),
@@ -95,28 +96,12 @@ public class ClientNode {
 
                 System.out.println("\n>>> Absolute amount of errors " + amountOfErrors);
                 System.out.printf("\n>>> Accuracy %.4f\n", (1 - amountOfErrors / (double) totalAmount));
-                System.out.printf("\n>>> Precision %.4f\n", (double) confusionMtx[0][0] / (double) (confusionMtx[0][0] + confusionMtx[0][1]));
-                System.out.printf("\n>>> Recall %.4f\n", (double) confusionMtx[0][0] / (double) (confusionMtx[0][0] + confusionMtx[1][0]));
+                System.out.printf("\n>>> Precision %.4f\n", (double) confusionMtx[0][0] / (double) (confusionMtx[0][0]
+                    + confusionMtx[0][1]));
+                System.out.printf("\n>>> Recall %.4f\n", (double) confusionMtx[0][0] / (double) (confusionMtx[0][0] +
+                    confusionMtx[1][0]));
                 System.out.println("\n>>> Confusion matrix is " + Arrays.deepToString(confusionMtx));
             }
-        }
-    }
-
-    private static void loadData(String fileName, IgniteCache<Integer, FraudObservation> cache)
-            throws FileNotFoundException {
-        Scanner scanner = new Scanner(new File(fileName));
-
-        int cnt = 0;
-        while (scanner.hasNextLine()) {
-            String row = scanner.nextLine();
-            String[] cells = row.split(",");
-            double[] features = new double[cells.length - 1];
-
-            for (int i = 0; i < cells.length - 1; i++)
-                features[i] = Double.valueOf(cells[i]);
-            double fraudClass = Double.valueOf(cells[cells.length - 1]);
-
-            cache.put(cnt++, new FraudObservation(features, fraudClass));
         }
     }
 
@@ -126,7 +111,7 @@ public class ClientNode {
         cacheConfiguration.setName(cacheName);
         cacheConfiguration.setAffinity(new RendezvousAffinityFunction(false, 10));
 
-        IgniteCache<Integer, FraudObservation> cache = ignite.createCache(cacheConfiguration);
+        IgniteCache<Integer, FraudObservation> cache = ignite.getOrCreateCache(cacheConfiguration);
 
         return cache;
     }
@@ -148,6 +133,29 @@ public class ClientNode {
 
         public double getFraudClass() {
             return fraudClass;
+        }
+    }
+
+    private static class Loader {
+        private void load(String fileName, IgniteCache<Integer, FraudObservation> cache) throws FileNotFoundException {
+            ClassLoader classLoader = getClass().getClassLoader();
+
+            File file = new File(classLoader.getResource(fileName).getFile());
+
+            Scanner scanner = new Scanner(file);
+
+            int cnt = 0;
+            while (scanner.hasNextLine()) {
+                String row = scanner.nextLine();
+                String[] cells = row.split(",");
+                double[] features = new double[cells.length - 1];
+
+                for (int i = 0; i < cells.length - 1; i++)
+                    features[i] = Double.valueOf(cells[i]);
+                double fraudClass = Double.valueOf(cells[cells.length - 1]);
+
+                cache.put(cnt++, new FraudObservation(features, fraudClass));
+            }
         }
     }
 }

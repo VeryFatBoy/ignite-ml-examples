@@ -24,14 +24,11 @@ import org.apache.ignite.configuration.IgniteConfiguration;
 public class ServerNode {
 
     public static void main(String... args) {
-        new Thread(() -> {
+
             IgniteConfiguration configuration = new IgniteConfiguration();
             configuration.setClientMode(false);
 
-            try (Ignite ignite = Ignition.start(configuration)) {
-                Thread.currentThread().join();
-            }
-            catch (InterruptedException ignore) { }
-        }).start();
+            Ignite ignite = Ignition.start(configuration);
+
     }
 }
