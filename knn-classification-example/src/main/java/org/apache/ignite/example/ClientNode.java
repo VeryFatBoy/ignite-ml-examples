@@ -25,16 +25,16 @@ import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.ScanQuery;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
-import org.apache.ignite.ml.knn.classification.KNNClassificationModel;
+import org.apache.ignite.ml.knn.NNClassificationModel;
 import org.apache.ignite.ml.knn.classification.KNNClassificationTrainer;
-import org.apache.ignite.ml.knn.classification.KNNStrategy;
+import org.apache.ignite.ml.knn.classification.NNStrategy;
 import org.apache.ignite.ml.math.distances.EuclideanDistance;
-import org.apache.ignite.ml.math.impls.vector.DenseLocalOnHeapVector;
 
 import javax.cache.Cache;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
+import org.apache.ignite.ml.math.primitives.vector.VectorUtils;
 
 public class ClientNode {
 
@@ -51,14 +51,14 @@ public class ClientNode {
 
             KNNClassificationTrainer trainer = new KNNClassificationTrainer();
 
-            KNNClassificationModel mdl = trainer.fit(
+            NNClassificationModel mdl = trainer.fit(
                     ignite,
                     trainData,
-                    (k, v) -> v.getFeatures(),     // Feature extractor.
-                    (k, v) -> v.getFlowerClass())  // Label extractor.
+                    (k, v) -> VectorUtils.of(v.getFeatures()),     // Feature extractor.
+                    (k, v) -> v.getFlowerClass())                  // Label extractor.
                     .withK(3)
                     .withDistanceMeasure(new EuclideanDistance())
-                    .withStrategy(KNNStrategy.WEIGHTED);
+                    .withStrategy(NNStrategy.WEIGHTED);
 
             System.out.println(">>> -----------------------------");
             System.out.println(">>> | Prediction | Ground Truth |");
@@ -72,7 +72,7 @@ public class ClientNode {
                     IrisObservation observation = testEntry.getValue();
 
                     double groundTruth = observation.getFlowerClass();
-                    double prediction = mdl.apply(new DenseLocalOnHeapVector(observation.getFeatures()));
+                    double prediction = mdl.apply(VectorUtils.of(observation.getFeatures()));
 
                     totalAmount++;
                     if (groundTruth != prediction)

@@ -29,13 +29,13 @@ import org.apache.ignite.ml.clustering.kmeans.KMeansModel;
 import org.apache.ignite.ml.clustering.kmeans.KMeansTrainer;
 import org.apache.ignite.ml.math.Tracer;
 import org.apache.ignite.ml.math.distances.EuclideanDistance;
-import org.apache.ignite.ml.math.impls.vector.DenseLocalOnHeapVector;
 
 import javax.cache.Cache;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Scanner;
+import org.apache.ignite.ml.math.primitives.vector.VectorUtils;
 
 public class ClientNode {
 
@@ -51,20 +51,20 @@ public class ClientNode {
             loadData("src/main/resources/titanic-test.csv", testData);
 
             KMeansTrainer trainer = new KMeansTrainer()
-                    .withK(2)
+                    .withAmountOfClusters(2)
                     .withDistance(new EuclideanDistance())
                     .withSeed(123L);
 
             KMeansModel mdl = trainer.fit(
                     ignite,
                     trainData,
-                    (k, v) -> v.getFeatures(),        // Feature extractor.
-                    (k, v) -> v.getSurvivedClass()    // Label extractor.
+                    (k, v) -> VectorUtils.of(v.getFeatures()),        // Feature extractor.
+                    (k, v) -> v.getSurvivedClass()                    // Label extractor.
             );
 
             System.out.println(">>> KMeans centroids");
-            Tracer.showAscii(mdl.centers()[0]);
-            Tracer.showAscii(mdl.centers()[1]);
+            Tracer.showAscii(mdl.getCenters()[0]);
+            Tracer.showAscii(mdl.getCenters()[1]);
             System.out.println(">>>");
 
             System.out.println(">>> -----------------------------");
@@ -80,7 +80,7 @@ public class ClientNode {
                     TitanicObservation observation = testEntry.getValue();
 
                     double groundTruth = observation.getSurvivedClass();
-                    double prediction = mdl.apply(new DenseLocalOnHeapVector(observation.getFeatures()));
+                    double prediction = mdl.apply(VectorUtils.of(observation.getFeatures()));
 
                     totalAmount++;
                     if ((int) groundTruth != (int) prediction)

@@ -25,7 +25,7 @@ import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.ScanQuery;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
-import org.apache.ignite.ml.math.impls.vector.DenseLocalOnHeapVector;
+import org.apache.ignite.ml.math.primitives.vector.VectorUtils;
 import org.apache.ignite.ml.regressions.linear.LinearRegressionLSQRTrainer;
 import org.apache.ignite.ml.regressions.linear.LinearRegressionModel;
 import org.apache.ignite.ml.trainers.DatasetTrainer;
@@ -55,8 +55,8 @@ public class ClientNode {
             LinearRegressionModel mdl = trainer.fit(
                     ignite,
                     trainData,
-                    (k, v) -> v.getFeatures(),  // Feature extractor.
-                    (k, v) -> v.getPrice()      // Label extractor.
+                    (k, v) -> VectorUtils.of(v.getFeatures()),  // Feature extractor.
+                    (k, v) -> v.getPrice()                      // Label extractor.
             );
             System.out.println("Training completed");
 
@@ -73,7 +73,7 @@ public class ClientNode {
                     HouseObservation observation = testEntry.getValue();
 
                     double realPrice = observation.getPrice();
-                    double predictedPrice = mdl.apply(new DenseLocalOnHeapVector(observation.getFeatures()));
+                    double predictedPrice = mdl.apply(VectorUtils.of(observation.getFeatures()));
 
                     u += Math.pow(realPrice - predictedPrice, 2);
                     v += Math.pow(realPrice - meanPrice, 2);
