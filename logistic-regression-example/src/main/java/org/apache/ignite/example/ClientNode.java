@@ -100,7 +100,20 @@ public class ClientNode {
                     + confusionMtx[0][1]));
                 System.out.printf("\n>>> Recall %.4f\n", (double) confusionMtx[0][0] / (double) (confusionMtx[0][0] +
                     confusionMtx[1][0]));
+
                 System.out.println("\n>>> Confusion matrix is " + Arrays.deepToString(confusionMtx));
+
+                System.out.println();
+
+                System.out.format("%32s%32s%32s", "|", "NO FRAUD |", " FRAUD |\n");
+                System.out.format("%32s%4d%28s%4d%28s", "NO FRAUD |", confusionMtx[0][0], " (true positives) |",
+                    confusionMtx[0][1], " (false positives)  |\n");
+                System.out.format("%32s%32s%32s", "|", "  |", "  |\n");
+                System.out.format("%32s%32s%32s", "|", "  |", "  |\n");
+                System.out.format("%32s%4d%28s%4d%28s", "FRAUD |", confusionMtx[0][1], " (false negatives) |",
+                    confusionMtx[1][1], " (true negatives) |\n");
+
+                System.out.println();
             }
         }
     }
