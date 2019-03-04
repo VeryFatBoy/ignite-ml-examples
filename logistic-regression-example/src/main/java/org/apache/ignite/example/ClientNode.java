@@ -52,11 +52,16 @@ public class ClientNode {
             loader.load("fraud-train.csv", trainData);
             loader.load("fraud-test.csv", testData);
 
-            LogisticRegressionSGDTrainer<?> trainer = new LogisticRegressionSGDTrainer<>(new UpdatesStrategy<>(
-                    new SimpleGDUpdateCalculator(0.2),
-                    SimpleGDParameterUpdate::sumLocal,
-                    SimpleGDParameterUpdate::avg
-            ), 100000, 10, 100, 123L);
+            LogisticRegressionSGDTrainer<?> trainer = new LogisticRegressionSGDTrainer<>()
+                    .withUpdatesStgy(new UpdatesStrategy<>(
+                            new SimpleGDUpdateCalculator(0.2),
+                            SimpleGDParameterUpdate::sumLocal,
+                            SimpleGDParameterUpdate::avg
+                    ))
+                    .withMaxIterations(100000)
+                    .withLocIterations(100)
+                    .withBatchSize(10)
+                    .withSeed(123L);
 
             LogisticRegressionModel mdl = trainer.fit(
                     ignite,
@@ -110,7 +115,7 @@ public class ClientNode {
                     confusionMtx[0][1], " (false positives)  |\n");
                 System.out.format("%32s%32s%32s", "|", "  |", "  |\n");
                 System.out.format("%32s%32s%32s", "|", "  |", "  |\n");
-                System.out.format("%32s%4d%28s%4d%28s", "FRAUD |", confusionMtx[0][1], " (false negatives) |",
+                System.out.format("%32s%4d%28s%4d%28s", "FRAUD |", confusionMtx[1][0], " (false negatives) |",
                     confusionMtx[1][1], " (true negatives) |\n");
 
                 System.out.println();
